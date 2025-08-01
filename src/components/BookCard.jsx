@@ -9,28 +9,35 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Bookmark, BookmarkCheck } from "lucide-react"
-import { useAuth } from "@/contexts/AuthContext"
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
+import { getCurrentUser } from "@/lib/auth"
 
 const BookCard = ({ book }) => {
-  const  {currentUser}  = useAuth();
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
-    if (currentUser) {
-      const savedBooks = JSON.parse(localStorage.getItem('savedBooks') || '{}')
-      setIsSaved(savedBooks[currentUser.uid]?.some(b => b.id === book.id) || false)
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      setCurrentUser(user)
+      if (user) {
+        const savedBooks = JSON.parse(localStorage.getItem('savedBooks') || '{}')
+        setIsSaved(savedBooks[user.id]?.some(b => b.id === book.id) || false)
+      }
     }
-  }, [currentUser, book.id])
+    checkAuth()
+  }, [book.id])
 
-  const handleSaveToggle = () => {
-    if (!currentUser) {
-      alert("User needs to login first")
+  const handleSaveToggle = async () => {
+    const user = await getCurrentUser()
+    if (!user) {
+      alert("Please sign in to save books")
       return
     }
 
     const savedBooks = JSON.parse(localStorage.getItem('savedBooks') || '{}')
-    const userSavedBooks = savedBooks[currentUser.uid] || []
+    const userSavedBooks = savedBooks[user.id] || []
 
     let updatedBooks
     if (isSaved) {
@@ -42,7 +49,7 @@ const BookCard = ({ book }) => {
     localStorage.setItem('savedBooks', 
       JSON.stringify({
         ...savedBooks,
-        [currentUser.uid]: updatedBooks
+        [user.id]: updatedBooks
       })
     )
     setIsSaved(!isSaved)
@@ -61,7 +68,7 @@ const BookCard = ({ book }) => {
   return (
     <Card className="w-full max-w-xs hover:shadow-md transition-all duration-200 flex flex-col h-[500px]">
       <CardHeader className="p-3 pb-1 flex-none">
-        <div className="relative h-40 w-full mx-auto flex items-center justify-center bg-gray-50 rounded-sm"> {/* Added flex centering and background */}
+        <div className="relative h-40 w-full mx-auto flex items-center justify-center bg-gray-50 rounded-sm">
           <img
             src={imageLinks?.thumbnail || "https://placehold.co/300x450?text=No+Cover&font=roboto"}
             alt={`Cover of ${title}`}
@@ -109,27 +116,43 @@ const BookCard = ({ book }) => {
           )}
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex-none">
+      <CardFooter className="p-4 pt-0 flex-none flex gap-2">
+        <Button
+          variant="outline"
+          className="flex-1"
+          asChild
+        >
+          <Link to={`/books/${book.id}`}>
+            View Details
+          </Link>
+        </Button>
+        
         {currentUser ? (
           <Button 
             variant={isSaved ? "default" : "outline"} 
-            className="w-full gap-2"
+            className="flex-1 gap-2"
             onClick={handleSaveToggle}
           >
             {isSaved ? (
               <>
                 <BookmarkCheck className="h-4 w-4" />
-                Saved
+                <span className="hidden sm:inline">Saved</span>
               </>
             ) : (
               <>
                 <Bookmark className="h-4 w-4" />
-                Save Book
+                <span className="hidden sm:inline">Save</span>
               </>
             )}
           </Button>
         ) : (
-            "Login to Save"
+          <Button 
+            variant="outline" 
+            className="flex-1"
+            onClick={() => alert("Please sign in to save books")}
+          >
+            <Bookmark className="h-4 w-4" />
+          </Button>
         )}
       </CardFooter>
     </Card>
