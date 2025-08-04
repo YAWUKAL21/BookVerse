@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+
 import {
   Card,
   CardContent,
@@ -11,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Bookmark, BookmarkCheck } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { getCurrentUser } from "@/lib/auth"
+import { getCurrentUser } from "@/services/auth"
 
 const BookCard = ({ book }) => {
   const [isSaved, setIsSaved] = useState(false)

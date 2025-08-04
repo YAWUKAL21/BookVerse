@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { signOut } from "../services/auth"; 
+import { signOut } from "../services/auth";
 
 export default function Header() {
   const navigate = useNavigate();

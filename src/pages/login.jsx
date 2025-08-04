@@ -1,69 +1,90 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { signIn } from "../services/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { supabase } from "../services/auth";
+import { Input } from "@/components/ui/input"; 
+import { Button } from "@/components/ui/button"; 
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  // Handle input changes
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  // Handle login form submission
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setErrorMsg("");
+    setError("");
+    setLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { email, password } = formData;
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     if (error) {
-      setErrorMsg(error.message);
+      setError(error.message);
     } else {
-      
-      navigate("/explore"); 
+      navigate("/"); // Redirect to Home
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow">
-        <h2 className="text-2xl font-bold mb-6 text-center text-blue-600">Log In to BookVerse</h2>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
+      <div className="bg-white shadow-md rounded-xl p-8 max-w-md w-full">
+        <h2 className="text-2xl font-bold text-center mb-6">Log in to BookVerse</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@example.com"
-            />
-          </div>
+        {/* Error Message */}
+        {error && (
+          <p className="text-red-600 text-sm mb-4 text-center">{error}</p>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Your password"
-            />
-          </div>
+        {/* Login Form */}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <Input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+          />
+          <Input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+            value={formData.password}
+            onChange={handleChange}
+          />
 
-          <Button type="submit" className="w-full">
-            Log In
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
           </Button>
         </form>
 
-        {errorMsg && <p className="text-red-500 mt-4 text-sm text-center">{errorMsg}</p>}
-
-        <p className="mt-6 text-center text-sm">
+        {/* Link to Register */}
+        <p className="text-sm text-center mt-4">
           Don’t have an account?{" "}
-          <a href="/register" className="text-blue-600 hover:underline">
-            Sign up
-          </a>
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Register
+          </Link>
         </p>
       </div>
     </div>

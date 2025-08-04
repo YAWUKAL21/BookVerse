@@ -1,25 +1,33 @@
-import { supabase } from "./supabaseClient";
+import { createClient } from "@supabase/supabase-js";
 
+const SUPABASE_URL = "https://igpzdqevhxyfgofbwnro.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
 
-export async function signUp(email, password) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+export const signUp = async (email, password) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
   return { data, error };
-}
+};
 
+export const getCurrentUser = async () => {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-export async function signIn(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  return { data, error };
-}
+  if (error) {
+    console.error("Error getting current user:", error.message);
+    return null;
+  }
 
+  return user;
+};
 
-export async function signOut() {
+export const signOut = async () => {
   const { error } = await supabase.auth.signOut();
   return error;
-}
-
-
-export async function getCurrentUser() {
-  const { data } = await supabase.auth.getUser();
-  return data?.user;
-}
+};

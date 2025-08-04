@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { BookCard } from "../components/BookCard";
+import BookCard from "../components/BookCard"; 
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "../services/auth";
+import { Link } from "react-router-dom"; 
 
 export function FavoritesPage() {
   const [favorites, setFavorites] = useState([]);
