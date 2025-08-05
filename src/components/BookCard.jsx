@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button"
-
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -7,92 +6,87 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Bookmark, BookmarkCheck } from "lucide-react"
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import { getCurrentUser } from "@/services/auth"
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Bookmark, BookmarkCheck } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { getCurrentUser } from "@/services/auth";
 
 const BookCard = ({ book }) => {
-  const [isSaved, setIsSaved] = useState(false)
-  const [currentUser, setCurrentUser] = useState(null)
+  const [isSaved, setIsSaved] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Get the Open Library work ID (example: "/works/OL12345W")
+  const workKey = book.key || "";
+  const workId = workKey.replace("/works/", "");
+
+  // Cover image
+  const coverImage = book.cover_i
+    ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`
+    : "https://placehold.co/200x300?text=No+Cover";
 
   useEffect(() => {
     const checkAuth = async () => {
-      const user = await getCurrentUser()
-      setCurrentUser(user)
+      const user = await getCurrentUser();
+      setCurrentUser(user);
       if (user) {
-        const savedBooks = JSON.parse(localStorage.getItem('savedBooks') || '{}')
-        setIsSaved(savedBooks[user.id]?.some(b => b.id === book.id) || false)
+        const savedBooks = JSON.parse(localStorage.getItem("savedBooks") || "{}");
+        setIsSaved(savedBooks[user.id]?.some((b) => b.key === book.key) || false);
       }
-    }
-    checkAuth()
-  }, [book.id])
+    };
+    checkAuth();
+  }, [book.key]);
 
   const handleSaveToggle = async () => {
-    const user = await getCurrentUser()
+    const user = await getCurrentUser();
     if (!user) {
-      alert("Please sign in to save books")
-      return
+      alert("Please sign in to save books");
+      return;
     }
 
-    const savedBooks = JSON.parse(localStorage.getItem('savedBooks') || '{}')
-    const userSavedBooks = savedBooks[user.id] || []
+    const savedBooks = JSON.parse(localStorage.getItem("savedBooks") || "{}");
+    const userSavedBooks = savedBooks[user.id] || [];
 
-    let updatedBooks
+    let updatedBooks;
     if (isSaved) {
-      updatedBooks = userSavedBooks.filter(b => b.id !== book.id)
+      updatedBooks = userSavedBooks.filter((b) => b.key !== book.key);
     } else {
-      updatedBooks = [...userSavedBooks, book]
+      updatedBooks = [...userSavedBooks, book];
     }
 
-    localStorage.setItem('savedBooks', 
+    localStorage.setItem(
+      "savedBooks",
       JSON.stringify({
         ...savedBooks,
-        [user.id]: updatedBooks
+        [user.id]: updatedBooks,
       })
-    )
-    setIsSaved(!isSaved)
-  }
-
-  const {
-    title = "Untitled Book",
-    authors = ["Unknown Author"],
-    description = "No description available.",
-    imageLinks = { thumbnail: "https://placehold.co/300x450?text=No+Cover&font=roboto" },
-    categories = ["General"],
-    publishedDate,
-    averageRating
-  } = book.volumeInfo || {}
+    );
+    setIsSaved(!isSaved);
+  };
 
   return (
-    <Card className="w-full max-w-xs hover:shadow-md transition-all duration-200 flex flex-col h-[500px]">
+    <Card className="w-full max-w-xs hover:shadow-md transition-all duration-200 flex flex-col h-[420px]">
       <CardHeader className="p-3 pb-1 flex-none">
-        <div className="relative h-40 w-full mx-auto flex items-center justify-center bg-gray-50 rounded-sm">
+        <div className="relative h-44 w-full mx-auto flex items-center justify-center bg-gray-50 rounded-sm">
           <img
-            src={imageLinks?.thumbnail || "https://placehold.co/300x450?text=No+Cover&font=roboto"}
-            alt={`Cover of ${title}`}
+            src={coverImage}
+            alt={book.title}
             className="object-contain max-h-full max-w-full"
-            style={{
-              width: 'auto',
-              height: 'auto',
-              maxHeight: '100%',
-              maxWidth: '100%',
-            }}
             loading="lazy"
           />
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-0 flex-grow">
-        <CardTitle className="text-lg line-clamp-2 mb-1">{title}</CardTitle>
+
+      <CardContent className="p-3 flex-grow">
+        <CardTitle className="text-base line-clamp-2">{book.title}</CardTitle>
         <CardDescription className="line-clamp-1 mb-2">
-          by {authors.join(", ")}
+          {book.author_name?.join(", ") || "Unknown Author"}
         </CardDescription>
-        
-        {categories?.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {categories.slice(0, 2).map((category) => (
+
+        {book.subject?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {book.subject.slice(0, 2).map((category) => (
               <Badge key={category} variant="outline" className="text-xs">
                 {category}
               </Badge>
@@ -100,55 +94,35 @@ const BookCard = ({ book }) => {
           </div>
         )}
 
-        {description && (
-          <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
-            {description}
-          </p>
-        )}
-
-        <div className="flex justify-between text-xs text-gray-500 mt-auto">
-          {publishedDate && (
-            <span>Published: {new Date(publishedDate).getFullYear()}</span>
-          )}
-          {averageRating && (
-            <span className="flex items-center">
-              ⭐ {averageRating}/5
-            </span>
-          )}
-        </div>
+        <p className="text-xs text-gray-500 mt-auto">
+          First published: {book.first_publish_year || "N/A"}
+        </p>
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex-none flex gap-2">
-        <Button
-          variant="outline"
-          className="flex-1"
-          asChild
-        >
-          <Link to={`/books/${book.id}`}>
-            View Details
-          </Link>
+
+      <CardFooter className="p-3 flex-none flex gap-2">
+        <Button variant="outline" className="flex-1" asChild>
+          <Link to={`/books/${workId}`}>View Details</Link>
         </Button>
-        
+
         {currentUser ? (
-          <Button 
-            variant={isSaved ? "default" : "outline"} 
-            className="flex-1 gap-2"
+          <Button
+            variant={isSaved ? "default" : "outline"}
+            className="flex-1 gap-1"
             onClick={handleSaveToggle}
           >
             {isSaved ? (
               <>
-                <BookmarkCheck className="h-4 w-4" />
-                <span className="hidden sm:inline">Saved</span>
+                <BookmarkCheck className="h-4 w-4" /> Saved
               </>
             ) : (
               <>
-                <Bookmark className="h-4 w-4" />
-                <span className="hidden sm:inline">Save</span>
+                <Bookmark className="h-4 w-4" /> Save
               </>
             )}
           </Button>
         ) : (
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="flex-1"
             onClick={() => alert("Please sign in to save books")}
           >
@@ -157,7 +131,7 @@ const BookCard = ({ book }) => {
         )}
       </CardFooter>
     </Card>
-  )
-}
+  );
+};
 
-export default BookCard
+export default BookCard;

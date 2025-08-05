@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../services/auth";
-import {  Link } from "react-router-dom";
-import axios from "axios";
+import { Link } from "react-router-dom";
 import BookCard from "../components/BookCard";
-import { Input } from "@/components/ui/input"; // ShadCN UI
-import { Loader } from "lucide-react"; // Optional loading spinner
+import { Input } from "@/components/ui/input";
+import { Loader } from "lucide-react";
+import { searchBooks } from "@/services/booksApi";
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("React");
@@ -12,12 +12,10 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Check login status
+  // Get logged in user
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
     };
     getUser();
@@ -25,17 +23,10 @@ export default function Home() {
 
   // Fetch books
   const fetchBooks = async (query) => {
-    try {
-      setLoading(true);
-      const res = await axios.get(
-        `https://openlibrary.org/search.json?q=${query}`
-      );
-      setBooks(res.data.docs.slice(0, 20));
-    } catch (error) {
-      console.error("Error fetching books:", error);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    const results = await searchBooks(query);
+    setBooks(results);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -54,23 +45,21 @@ export default function Home() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-center mb-6">📚 BookVerse</h1>
 
-        {/* Auth Buttons */}
         {!user && (
-          <div className="flex justify-center gap-4 mb-6">
+          <div className="flex justify-end gap-4 mb-6">
             <Link to="/login">
-              <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+              <button className="bg-blue-500 text-white px-4 py-2 rounded">
                 Login
               </button>
             </Link>
             <Link to="/register">
-              <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
+              <button className="bg-green-500 text-white px-4 py-2 rounded">
                 Register
               </button>
             </Link>
           </div>
         )}
 
-        {/* Search Bar */}
         <form onSubmit={handleSearch} className="flex gap-2 mb-8">
           <Input
             type="text"
@@ -81,15 +70,14 @@ export default function Home() {
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white px-4 py-2 rounded"
           >
             Search
           </button>
         </form>
 
-        {/* Book Results */}
         {loading ? (
-          <div className="flex justify-center items-center h-40">
+          <div className="flex justify-center h-40">
             <Loader className="animate-spin w-6 h-6 text-blue-600" />
           </div>
         ) : books.length > 0 ? (
